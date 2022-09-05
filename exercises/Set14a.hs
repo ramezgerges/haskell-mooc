@@ -1,19 +1,20 @@
+{-# LANGUAGE LambdaCase #-}
+
 module Set14a where
 
 -- Remember to browse the docs of the Data.Text and Data.ByteString
 -- libraries while working on the exercises!
 
-import Mooc.Todo
-
 import Data.Bits
-import Data.Char
-import Data.Text.Encoding
-import Data.Word
-import Data.Int
-import qualified Data.Text as T
-import qualified Data.Text.Lazy as TL
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy as BL
+import Data.Char
+import Data.Int
+import qualified Data.Text as T
+import Data.Text.Encoding
+import qualified Data.Text.Lazy as TL
+import Data.Word
+import Mooc.Todo
 
 ------------------------------------------------------------------------------
 -- Ex 1: Greet a person. Given the name of a person as a Text, return
@@ -28,7 +29,10 @@ import qualified Data.ByteString.Lazy as BL
 --  greetText (T.pack "Benedict Cumberbatch") ==> "Hello, Benedict Cumber...!"
 
 greetText :: T.Text -> T.Text
-greetText = todo
+greetText x =
+  if T.length x > 15
+    then T.pack "Hello, " <> T.take 15 x <> T.pack "...!"
+    else T.pack "Hello, " <> x <> T.pack "!"
 
 ------------------------------------------------------------------------------
 -- Ex 2: Capitalize every second word of a Text.
@@ -40,7 +44,10 @@ greetText = todo
 --     ==> "WORD"
 
 shout :: T.Text -> T.Text
-shout = todo
+shout txt =
+  let ws = T.words txt
+      xs = zip ws [0 .. (length ws)]
+   in T.intercalate (T.pack " ") ((\case (word, idx) -> if idx `mod` 2 == 1 then word else T.toUpper word) <$> xs)
 
 ------------------------------------------------------------------------------
 -- Ex 3: Find the longest sequence of a single character repeating in
@@ -51,7 +58,14 @@ shout = todo
 --   longestRepeat (T.pack "aabbbbccc") ==> 4
 
 longestRepeat :: T.Text -> Int
-longestRepeat = todo
+longestRepeat txt = longestRepeat' txt 'c' 0 0
+
+longestRepeat' txt last acc best =
+  if T.null txt
+    then best
+    else
+      let newAcc = if last == T.head txt then acc + 1 else 1
+       in longestRepeat' (T.tail txt) (T.head txt) newAcc (max best newAcc)
 
 ------------------------------------------------------------------------------
 -- Ex 4: Given a lazy (potentially infinite) Text, extract the first n
@@ -64,7 +78,7 @@ longestRepeat = todo
 --   takeStrict 15 (TL.pack (cycle "asdf"))  ==>  "asdfasdfasdfasd"
 
 takeStrict :: Int64 -> TL.Text -> T.Text
-takeStrict = todo
+takeStrict n txt = T.pack $ TL.unpack $ TL.take n txt
 
 ------------------------------------------------------------------------------
 -- Ex 5: Find the difference between the largest and smallest byte
@@ -76,7 +90,10 @@ takeStrict = todo
 --   byteRange (B.pack [3]) ==> 0
 
 byteRange :: B.ByteString -> Word8
-byteRange = todo
+byteRange bs = if B.null bs then 0 else maxChar - minChar
+  where
+    minChar = B.foldr min (B.head bs) (B.tail bs)
+    maxChar = B.foldr max (B.head bs) (B.tail bs)
 
 ------------------------------------------------------------------------------
 -- Ex 6: Compute the XOR checksum of a ByteString. The XOR checksum of
@@ -97,7 +114,7 @@ byteRange = todo
 --   xorChecksum (B.pack []) ==> 0
 
 xorChecksum :: B.ByteString -> Word8
-xorChecksum = todo
+xorChecksum bs = B.foldr xor 0 bs
 
 ------------------------------------------------------------------------------
 -- Ex 7: Given a ByteString, compute how many UTF-8 characters it
@@ -114,7 +131,9 @@ xorChecksum = todo
 --   countUtf8Chars (B.drop 1 (encodeUtf8 (T.pack "åäö"))) ==> Nothing
 
 countUtf8Chars :: B.ByteString -> Maybe Int
-countUtf8Chars = todo
+countUtf8Chars bs = case decodeUtf8' bs of
+    Right txt -> Just $ T.length txt
+    Left exception -> Nothing
 
 ------------------------------------------------------------------------------
 -- Ex 8: Given a (nonempty) strict ByteString b, generate an infinite
@@ -126,5 +145,6 @@ countUtf8Chars = todo
 --     ==> [0,1,2,2,1,0,0,1,2,2,1,0,0,1,2,2,1,0,0,1]
 
 pingpong :: B.ByteString -> BL.ByteString
-pingpong = todo
+pingpong b = pingpong' $ BL.pack $ B.unpack b
 
+pingpong' bl = bl <> BL.reverse bl <> pingpong' bl
